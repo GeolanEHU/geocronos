@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>🌍 GEOCRONOS ⏳</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #e0e0e0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .pantalla {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      flex-grow: 1;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+    .pantalla.visible {
+      display: flex;
+      opacity: 1;
+    }
+    .contenedor {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      position: relative;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin: 1rem 0 0.5rem;
+      text-shadow: 0 0 6px rgba(255,255,255,0.3);
+    }
+    h2 {
+      font-size: 1.6rem;
+      margin: 0.5rem 0 1rem;
+      text-shadow: 0 0 6px rgba(255,255,255,0.3);
+    }
+    .boton {
+      background: #4caf50;
+      color: white;
+      font-weight: 700;
+      font-size: 1.2rem;
+      padding: 1rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 6px 10px rgba(76,175,80,0.5);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      width: 100%;
+      max-width: 320px;
+    }
+    .boton:hover, .boton:focus {
+      background: #45a049;
+      outline: none;
+      transform: scale(1.05);
+    }
+    .boton:active {
+      transform: scale(0.97);
+      box-shadow: 0 4px 6px rgba(76,175,80,0.7);
+    }
+    .opciones {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 1rem;
+    }
+    .opcion {
+      background: #263238;
+      padding: 1rem;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+      color: #cfd8dc;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+    .opcion:hover {
+      background: #455a64;
+      color: #e0f7fa;
+    }
+    .correcto {
+      background-color: #2e7d32 !important;
+      color: #e8f5e9 !important;
+      box-shadow: 0 0 12px #66bb6a;
+    }
+    .incorrecto {
+      background-color: #c62828 !important;
+      color: #ffebee !important;
+      box-shadow: 0 0 12px #ef5350;
+    }
+    .vidas {
+      font-size: 2.5rem;
+      letter-spacing: 0.25rem;
+      text-shadow: 0 0 5px rgba(255,0,0,0.8);
+      min-height: 3rem;
+    }
+    #preguntaEdad {
+      font-size: 3rem;
+      font-weight: 900;
+      text-shadow: 0 0 2px #fff;
+      margin: 1rem 0;
+    }
+    #creditos p {
+      max-width: 360px;
+      margin: 1rem auto;
+      font-size: 1.1rem;
+      line-height: 1.4;
+      color: #b0bec5;
+    }
+    
+    /* Estilos para el botón de rendirse */
+    .opcion.rendirse {
+      background: #800000;
+      grid-column: span 2;
+    }
+    .opcion.rendirse:hover {
+      background: #a00000;
+    }
+    
+    /* Estilos mejorados para el modal de rendirse */
+    .modal-rendirse {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 32, 39, 0.98);
+      z-index: 10;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      border-radius: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+      padding: 2rem;
+      backdrop-filter: blur(3px);
+    }
+    .modal-rendirse.visible {
+      display: flex;
+      animation: aparecer 0.3s ease;
+    }
+    @keyframes aparecer {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-rendirse h3 {
+      font-size: 1.8rem;
+      margin-bottom: 2rem;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+    .modal-botones {
+      display: flex;
+      gap: 1.5rem;
+    }
+    .modal-boton {
+      padding: 0.9rem 2rem;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      border: none;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .modal-boton.si {
+      background: linear-gradient(to bottom, #c62828, #8e0000);
+      color: white;
+    }
+    .modal-boton.si:hover {
+      background: linear-gradient(to bottom, #d32f2f, #b71c1c);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(198, 40, 40, 0.4);
+    }
+    .modal-boton.no {
+      background: linear-gradient(to bottom, #2e7d32, #1b5e20);
+      color: white;
+    }
+    .modal-boton.no:hover {
+      background: linear-gradient(to bottom, #388e3c, #2e7d32);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(46, 125, 50, 0.4);
+    }
+    .oculto {
+      visibility: hidden;
+    }
+
+    @media (max-width: 480px) {
+      .boton {
+        font-size: 1rem;
+        padding: 0.9rem 1rem;
+      }
+      .opciones {
+        grid-template-columns: 1fr;
+      }
+      #preguntaEdad {
+        font-size: 2.4rem;
+      }
+      .vidas {
+        font-size: 2rem;
+      }
+      .opcion.rendirse {
+        grid-column: span 1;
+      }
+      .modal-botones {
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+        max-width: 200px;
+      }
+      .modal-boton {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="menu" class="pantalla visible">
+    <div class="contenedor">
+      <h1>🌍 GEOCRONOS ⏳</h1>
+      <h2>¡Para aprender la Tabla Cronoestratigráfica Internacional!</h2>
+      <button class="boton" onclick="mostrarMenuDificultad()">▶️ Empezar partida</button>
+      <button class="boton" onclick="mostrarCreditos()">ℹ️ Créditos</button>
+    </div>
+  </div>
+
+  <div id="menuDificultad" class="pantalla">
+    <div class="contenedor">
+      <h2>Elige dificultad</h2>
+      <button class="boton" onclick="iniciarJuego('facil')">🟢 Fácil (Eones y Eras)</button>
+      <button class="boton" onclick="iniciarJuego('media')">🟡 Media (Periodos y Épocas)</button>
+      <button class="boton" onclick="iniciarJuego('dificil')">🔴 Difícil (Edades)</button>
+      <button class="boton" onclick="iniciarJuego('infinito')">♾️ Infinito (Mezcla)</button>
+      <button class="boton" onclick="volverAlMenu()">⬅️ Volver</button>
+    </div>
+  </div>
+
+  <div id="juego" class="pantalla">
+    <div class="contenedor">
+      <div class="vidas" id="vidas">❤️❤️❤️</div>
+      <h2>¿A qué unidad geológica corresponde esta edad?</h2>
+      <div id="preguntaEdad">000 Ma</div>
+      <div class="opciones" id="opciones"></div>
+      
+      <!-- Modal de rendirse -->
+      <div class="modal-rendirse" id="modalRendirse">
+        <h3>¿Quieres rendirte?</h3>
+        <div class="modal-botones">
+          <button class="modal-boton si" onclick="rendirseConfirmado()">Sí</button>
+          <button class="modal-boton no" onclick="ocultarModalRendirse()">Jamás</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="gameover" class="pantalla">
+    <div class="contenedor">
+      <h1>Fin del juego</h1>
+      <p>Preguntas acertadas: <span id="aciertos"></span></p>
+      <button class="boton" onclick="volverAlMenu()">🔄 Volver al Menú</button>
+    </div>
+  </div>
+
+  <div id="creditos" class="pantalla">
+    <div class="contenedor">
+      <h1>Créditos</h1>
+      <p>Juego desarrollado por Ibai Del Estal Alonso para Geolan - 2025<br>🌟 ¡Gracias por jugar! 🌟</p>
+      <button class="boton" onclick="volverAlMenu()">⬅️ Volver</button>
+    </div>
+  </div>
+
+  <script>
+    const pantallas = {
+      menu: document.getElementById("menu"),
+      menuDificultad: document.getElementById("menuDificultad"),
+      juego: document.getElementById("juego"),
+      gameover: document.getElementById("gameover"),
+      creditos: document.getElementById("creditos")
+    };
+    const vidasElem = document.getElementById("vidas");
+    const preguntaEdad = document.getElementById("preguntaEdad");
+    const opcionesElem = document.getElementById("opciones");
+    const aciertosElem = document.getElementById("aciertos");
+    const modalRendirse = document.getElementById("modalRendirse");
+
+    const unidades = [
+      /*DIFICULTAD FÁCIL*/
+      /*EONES*/
+      { nombre: "Hádico", inicio: 4567, dificultad: "facil" },
+      { nombre: "Arcaico", inicio: 4031, dificultad: "facil" },
+      { nombre: "Proterozoico", inicio: 2500, dificultad: "facil" },
+      { nombre: "Fanerozoico", inicio: 538.8, dificultad: "facil" },
+
+      /*ERAS*/
+      { nombre: "Eo-arcaico", inicio: 4031, dificultad: "facil" },
+      { nombre: "Paleo-arcaico", inicio: 3600, dificultad: "facil" },
+      { nombre: "Meso-arcaico", inicio: 3200, dificultad: "facil" },
+      { nombre: "Neo-arcaico", inicio: 2800, dificultad: "facil" },
+      { nombre: "Paleo-proterozoico", inicio: 2500, dificultad: "facil" },
+      { nombre: "Meso-proterozoico", inicio: 1600, dificultad: "facil" },
+      { nombre: "Neo-proterozoico", inicio: 1000, dificultad: "facil" },
+      { nombre: "Paleozoico", inicio: 538.8, dificultad: "facil" },
+      { nombre: "Mesozoico", inicio: 251.902, dificultad: "facil" },
+      { nombre: "Cenozoico", inicio: 66, dificultad: "facil" },
+
+      /*DIFICULTAD MEDIA*/
+      /*PERIODOS*/
+      { nombre: "Sidérico", inicio: 2500, dificultad: "media" },
+      { nombre: "Riácico", inicio: 2300, dificultad: "media" },
+      { nombre: "Orosírico", inicio: 2050, dificultad: "media" },
+      { nombre: "Estatérico", inicio: 1800, dificultad: "media" },
+      { nombre: "Calímico", inicio: 1600, dificultad: "media" },
+      { nombre: "Ectásico", inicio: 1400, dificultad: "media" },
+      { nombre: "Esténico", inicio: 1200, dificultad: "media" },
+      { nombre: "Tónico", inicio: 1000, dificultad: "media" },
+      { nombre: "Criogénico", inicio: 720, dificultad: "media" },
+      { nombre: "Ediacárico", inicio: 635, dificultad: "media" },
+      { nombre: "Cámbrico", inicio: 538.8, dificultad: "media" },
+      { nombre: "Ordovícico", inicio: 486.85, dificultad: "media" },
+      { nombre: "Silúrico", inicio: 443.1, dificultad: "media" },
+      { nombre: "Devónico", inicio: 419.62, dificultad: "media" },
+      { nombre: "Carbonífero", inicio: 358.86, dificultad: "media" },
+      { nombre: "Pérmico", inicio: 298.9, dificultad: "media" },
+      { nombre: "Triásico", inicio: 251.902, dificultad: "media" },
+      { nombre: "Jurásico", inicio: 201.4, dificultad: "media" },
+      { nombre: "Cretácico", inicio: 143.1, dificultad: "media" },
+      { nombre: "Paleógeno", inicio: 66, dificultad: "media" },
+      { nombre: "Neógeno", inicio: 23.04, dificultad: "media" },
+      { nombre: "Cuaternario", inicio: 2.58, dificultad: "media" },
+
+      /*ÉPOCAS*/
+      { nombre: "Terreneuviense", inicio: 538.8, dificultad: "media" },
+      { nombre: "Cámbrico Serie 2", inicio: 521, dificultad: "media" },
+      { nombre: "Miaolingiense", inicio: 506.5, dificultad: "media" },
+      { nombre: "Furogiense", inicio: 497, dificultad: "media" },
+      { nombre: "Ordovícico Inferior", inicio: 486.85, dificultad: "media" },
+      { nombre: "Ordovícico media", inicio: 471.3, dificultad: "media" },
+      { nombre: "Ordovícico Superior", inicio: 458.2, dificultad: "media" },
+      { nombre: "Llandovery", inicio: 443.1, dificultad: "media" },
+      { nombre: "Wenlock", inicio: 432.9, dificultad: "media" },
+      { nombre: "Ludlow", inicio: 426.7, dificultad: "media" },
+      { nombre: "Prídoli", inicio: 422.7, dificultad: "media" },
+      { nombre: "Devónico Inferior", inicio: 419.62, dificultad: "media" },
+      { nombre: "Devónico media", inicio: 393.47, dificultad: "media" },
+      { nombre: "Devónico Superior", inicio: 382.31, dificultad: "media" },
+      { nombre: "Misisípico Inferior", inicio: 358.86, dificultad: "media" },
+      { nombre: "Misisípico media", inicio: 346.7, dificultad: "media" },
+      { nombre: "Misisípico Superior", inicio: 330.3, dificultad: "media" },
+      { nombre: "Pensilvánico Inferior", inicio: 323.4, dificultad: "media" },
+      { nombre: "Pensilvánico media", inicio: 315.2, dificultad: "media" },
+      { nombre: "Pensilvánico Superior", inicio: 307, dificultad: "media" },
+      { nombre: "Cisuraliense", inicio: 298.9, dificultad: "media" },
+      { nombre: "Guadalupiense", inicio: 274.4, dificultad: "media" },
+      { nombre: "Lopingiense", inicio: 259.51, dificultad: "media" },
+      { nombre: "Triásico Inferior", inicio: 251.902, dificultad: "media" },
+      { nombre: "Triásico media", inicio: 246.7, dificultad: "media" },
+      { nombre: "Triásico Superior", inicio: 237, dificultad: "media" },
+      { nombre: "Jurásico Inferior", inicio: 201.4, dificultad: "media" },
+      { nombre: "Jurásico media", inicio: 174.7, dificultad: "media" },
+      { nombre: "Jurásico Superior", inicio: 161.5, dificultad: "media" },
+      { nombre: "Cretácico Inferior", inicio: 143.1, dificultad: "media" },
+      { nombre: "Cretácico Superior", inicio: 100.5, dificultad: "media" },
+      { nombre: "Paleoceno", inicio: 66, dificultad: "media" },
+      { nombre: "Eoceno", inicio: 56, dificultad: "media" },
+      { nombre: "Oligoceno", inicio: 33.9, dificultad: "media" },
+      { nombre: "Mioceno", inicio: 23.04, dificultad: "media" },
+      { nombre: "Plioceno", inicio: 5.333, dificultad: "media" },
+      { nombre: "Pleistoceno", inicio: 2.58, dificultad: "media" },
+      { nombre: "Holoceno", inicio: 0.0117, dificultad: "media" },
+      { nombre: "Antropoceno", inicio: 0.000075, dificultad: "media" },
+
+      /*DIFICULTAD DIFÍCIL*/
+      /*EDADES*/
+      { nombre: "Fortuniense", inicio: 538.8, dificultad: "dificil" },
+      { nombre: "Cámbrico Piso 2", inicio: 529, dificultad: "dificil" },
+      { nombre: "Cámbrico Piso 3", inicio: 521, dificultad: "dificil" },
+      { nombre: "Cámbrico Piso 4", inicio: 514.5, dificultad: "dificil" },
+      { nombre: "Wuliuense", inicio: 506.5, dificultad: "dificil" },
+      { nombre: "Drumiense", inicio: 504.5, dificultad: "dificil" },
+      { nombre: "Guzhangiense", inicio: 500.5, dificultad: "dificil" },
+      { nombre: "Paibiense", inicio: 497, dificultad: "dificil" },
+      { nombre: "Jiangshaniense", inicio: 494.2, dificultad: "dificil" },
+      { nombre: "Cámbrico Piso 10", inicio: 491, dificultad: "dificil" },
+      { nombre: "Tremadociense", inicio: 486.85, dificultad: "dificil" },
+      { nombre: "Floiense", inicio: 477.1, dificultad: "dificil" },
+      { nombre: "Dapingiense", inicio: 471.3, dificultad: "dificil" },
+      { nombre: "Darriwiliense", inicio: 469.4, dificultad: "dificil" },
+      { nombre: "Sandbiense", inicio: 458.2, dificultad: "dificil" },
+      { nombre: "Katiense", inicio: 452.8, dificultad: "dificil" },
+      { nombre: "Hirnantiense", inicio: 445.2, dificultad: "dificil" },
+      { nombre: "Rhuddaniense", inicio: 443.1, dificultad: "dificil" },
+      { nombre: "Aeroniense", inicio: 440.5, dificultad: "dificil" },
+      { nombre: "Telychiense", inicio: 438.6, dificultad: "dificil" },
+      { nombre: "Sheinwoodiense", inicio: 432.9, dificultad: "dificil" },
+      { nombre: "Homeriense", inicio: 430.6, dificultad: "dificil" },
+      { nombre: "Grostiense", inicio: 426.7, dificultad: "dificil" },
+      { nombre: "Ludfordiense", inicio: 425, dificultad: "dificil" },
+      { nombre: "Lochkoviense", inicio: 419.62, dificultad: "dificil" },
+      { nombre: "Pragiense", inicio: 413.02, dificultad: "dificil" },
+      { nombre: "Emsiense", inicio: 410.62, dificultad: "dificil" },
+      { nombre: "Eifeliense", inicio: 393.47, dificultad: "dificil" },
+      { nombre: "Givetiense", inicio: 387.95, dificultad: "dificil" },
+      { nombre: "Frasniense", inicio: 382.31, dificultad: "dificil" },
+      { nombre: "Fameniense", inicio: 372.15, dificultad: "dificil" },
+      { nombre: "Tournaisiense", inicio: 358.86, dificultad: "dificil" },
+      { nombre: "Viseense", inicio: 346.7, dificultad: "dificil" },
+      { nombre: "Serpukhoviense", inicio: 330.3, dificultad: "dificil" },
+      { nombre: "Bashkiriense", inicio: 323.4, dificultad: "dificil" },
+      { nombre: "Moscoviense", inicio: 315.2, dificultad: "dificil" },
+      { nombre: "Kasimoviense", inicio: 307, dificultad: "dificil" },
+      { nombre: "Gzheliense", inicio: 303.7, dificultad: "dificil" },
+      { nombre: "Asseliense", inicio: 298.9, dificultad: "dificil" },
+      { nombre: "Sakmariense", inicio: 239.52, dificultad: "dificil" },
+      { nombre: "Artinskiense", inicio: 290.1, dificultad: "dificil" },
+      { nombre: "Kunguriense", inicio: 283.3, dificultad: "dificil" },
+      { nombre: "Roadiense", inicio: 274.4, dificultad: "dificil" },
+      { nombre: "Wordiense", inicio: 266.9, dificultad: "dificil" },
+      { nombre: "Capitaniense", inicio: 264.28, dificultad: "dificil" },
+      { nombre: "Wuchiapingiense", inicio: 259.51, dificultad: "dificil" },
+      { nombre: "Changhsingiense", inicio: 254.14, dificultad: "dificil" },
+      { nombre: "Induense", inicio: 251.902, dificultad: "dificil" },
+      { nombre: "Olenekiense", inicio: 249.9, dificultad: "dificil" },
+      { nombre: "Anisiense", inicio: 246.7, dificultad: "dificil" },
+      { nombre: "Ladiniense", inicio: 241.464, dificultad: "dificil" },
+      { nombre: "Carniense", inicio: 237, dificultad: "dificil" },
+      { nombre: "Noriense", inicio: 227.3, dificultad: "dificil" },
+      { nombre: "Rhaetiense", inicio: 205.7, dificultad: "dificil" },
+      { nombre: "Hettangiense", inicio: 201.4, dificultad: "dificil" },
+      { nombre: "Sinemuriense", inicio: 199.5, dificultad: "dificil" },
+      { nombre: "Pliensbachiense", inicio: 192.9, dificultad: "dificil" },
+      { nombre: "Toarciense", inicio: 184.2, dificultad: "dificil" },
+      { nombre: "Aaleniense", inicio: 174.7, dificultad: "dificil" },
+      { nombre: "Bajociense", inicio: 170.9, dificultad: "dificil" },
+      { nombre: "Bathoniense", inicio: 168.2, dificultad: "dificil" },
+      { nombre: "Calloviense", inicio: 165.3, dificultad: "dificil" },
+      { nombre: "Oxfordiense", inicio: 161.5, dificultad: "dificil" },
+      { nombre: "Kimmerdigiense", inicio: 154.8, dificultad: "dificil" },
+      { nombre: "Titoniense", inicio: 149.2, dificultad: "dificil" },
+      { nombre: "Berriasiense", inicio: 143.1, dificultad: "dificil" },
+      { nombre: "Valanginiense", inicio: 137.05, dificultad: "dificil" },
+      { nombre: "Hauteriviense", inicio: 132.6, dificultad: "dificil" },
+      { nombre: "Barremiense", inicio: 125.77, dificultad: "dificil" },
+      { nombre: "Aptiense", inicio: 121.4, dificultad: "dificil" },
+      { nombre: "Albiense", inicio: 113.2, dificultad: "dificil" },
+      { nombre: "Cenomaniense", inicio: 100.5, dificultad: "dificil" },
+      { nombre: "TuronienseHettangiense", inicio: 93.9, dificultad: "dificil" },
+      { nombre: "Coniaciense", inicio: 89.8, dificultad: "dificil" },
+      { nombre: "Santoniense", inicio: 85.7, dificultad: "dificil" },
+      { nombre: "Campaniense", inicio: 83.6, dificultad: "dificil" },
+      { nombre: "Maastrichtiense", inicio: 72.2, dificultad: "dificil" },
+      { nombre: "Daniense", inicio: 66, dificultad: "dificil" },
+      { nombre: "Selandiense", inicio: 61.66, dificultad: "dificil" },
+      { nombre: "Thatetiense", inicio: 59.24, dificultad: "dificil" },
+      { nombre: "Ypresiense", inicio: 56, dificultad: "dificil" },
+      { nombre: "Luteciense", inicio: 48.07, dificultad: "dificil" },
+      { nombre: "Bartoniense", inicio: 41.03, dificultad: "dificil" },
+      { nombre: "Priaboniense", inicio: 37.71, dificultad: "dificil" },
+      { nombre: "Rupeliense", inicio: 33.9, dificultad: "dificil" },
+      { nombre: "Chattiense", inicio: 27.3, dificultad: "dificil" },
+      { nombre: "Aquitaniense", inicio: 23.04, dificultad: "dificil" },
+      { nombre: "Burdigaliense", inicio: 20.45, dificultad: "dificil" },
+      { nombre: "Langhiense", inicio: 15.98, dificultad: "dificil" },
+      { nombre: "Serravalliense", inicio: 13.82, dificultad: "dificil" },
+      { nombre: "Tortoniense", inicio: 11.63, dificultad: "dificil" },
+      { nombre: "Messiniense", inicio: 7.246, dificultad: "dificil" },
+      { nombre: "Zancliense", inicio: 5.333, dificultad: "dificil" },
+      { nombre: "Piacenziense", inicio: 3.6, dificultad: "dificil" },
+      { nombre: "Gelasiense", inicio: 2.58, dificultad: "dificil" },
+      { nombre: "Calabriense", inicio: 1.8, dificultad: "dificil" },
+      { nombre: "Chibaniense", inicio: 0.774, dificultad: "dificil" },
+      { nombre: "Pleistoceno Superior", inicio: 0.129, dificultad: "dificil" },
+      { nombre: "Groenlandiense", inicio: 0.0117, dificultad: "dificil" },
+      { nombre: "Norgripiense", inicio: 0.0082, dificultad: "dificil" },
+      { nombre: "Megalayense", inicio: 0.0042, dificultad: "dificil" }
+    ];
+
+    let dificultad = "";
+    let vidas = 3;
+    let aciertos = 0;
+    let modoInfinito = false;
+    let ultimaPregunta = null;
+
+    function mostrarPantalla(id) {
+      for (const key in pantallas) {
+        pantallas[key].classList.remove("visible");
+      }
+      pantallas[id].classList.add("visible");
+      
+      if (id !== "juego") {
+        ocultarModalRendirse();
+      }
+    }
+
+    function mostrarMenuDificultad() {
+      mostrarPantalla("menuDificultad");
+    }
+
+    function mostrarCreditos() {
+      mostrarPantalla("creditos");
+    }
+
+    function volverAlMenu() {
+      mostrarPantalla("menu");
+    }
+
+    function iniciarJuego(nivel) {
+      dificultad = nivel;
+      vidas = 3;
+      aciertos = 0;
+      modoInfinito = nivel === "infinito";
+      ultimaPregunta = null;
+      
+      mostrarPantalla("juego");
+      actualizarVidas();
+      siguientePregunta();
+    }
+
+    function actualizarVidas() {
+      vidasElem.textContent = "❤️".repeat(vidas);
+    }
+
+    function mostrarModalRendirse() {
+      document.querySelector("h2").classList.add("oculto");
+      preguntaEdad.classList.add("oculto");
+      opcionesElem.classList.add("oculto");
+      
+      modalRendirse.classList.add("visible");
+    }
+
+    function ocultarModalRendirse() {
+      modalRendirse.classList.remove("visible");
+      
+      document.querySelector("h2").classList.remove("oculto");
+      preguntaEdad.classList.remove("oculto");
+      opcionesElem.classList.remove("oculto");
+    }
+
+    function rendirseConfirmado() {
+      mostrarPantalla("gameover");
+      aciertosElem.textContent = aciertos;
+    }
+
+    function siguientePregunta() {
+      let banco = dificultad === "infinito"
+        ? unidades
+        : unidades.filter(u => u.dificultad === dificultad);
+
+      let correcta;
+      do {
+        correcta = banco[Math.floor(Math.random() * banco.length)];
+      } while (ultimaPregunta && correcta.inicio === ultimaPregunta.inicio);
+
+      ultimaPregunta = correcta;
+      const opciones = [correcta];
+      const iniciosUsados = new Set([correcta.inicio]);
+
+      while (opciones.length < 4) {
+        const aleatoria = banco[Math.floor(Math.random() * banco.length)];
+        
+        if (!iniciosUsados.has(aleatoria.inicio)) {
+          opciones.push(aleatoria);
+          iniciosUsados.add(aleatoria.inicio);
+        }
+      }
+
+      opciones.sort(() => Math.random() - 0.5);
+      preguntaEdad.textContent = `${correcta.inicio} Ma`;
+      opcionesElem.innerHTML = "";
+
+      for (const opcion of opciones) {
+        const btn = document.createElement("div");
+        btn.className = "opcion";
+        btn.textContent = opcion.nombre;
+        btn.onclick = () => {
+          if (opcion === correcta) {
+            btn.classList.add("correcto");
+            aciertos++;
+          } else {
+            btn.classList.add("incorrecto");
+            vidas--;
+            actualizarVidas();
+            
+            const opciones = opcionesElem.querySelectorAll(".opcion");
+            opciones.forEach(opcion => {
+              if (opcion.textContent === correcta.nombre) {
+                opcion.classList.add("correcto");
+              }
+            });
+          }
+
+          [...opcionesElem.children].forEach(child => child.onclick = null);
+
+          setTimeout(() => {
+            if (vidas <= 0 /*&& !modoInfinito*/) {
+              mostrarPantalla("gameover");
+              aciertosElem.textContent = aciertos;
+            } else {
+              siguientePregunta();
+            }
+          }, 1000);
+        };
+        opcionesElem.appendChild(btn);
+      }
+      
+      const btnRendirse = document.createElement("div");
+      btnRendirse.className = "opcion rendirse";
+      btnRendirse.textContent = "Rendirse";
+      btnRendirse.onclick = mostrarModalRendirse;
+      opcionesElem.appendChild(btnRendirse);
+    }
+  </script>
+</body>
+</html>
